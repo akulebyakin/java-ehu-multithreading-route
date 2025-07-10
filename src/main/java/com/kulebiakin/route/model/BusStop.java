@@ -1,16 +1,14 @@
 package com.kulebiakin.route.model;
 
 
-import com.kulebiakin.route.model.Bus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class BusStop {
     private static final Logger log = LoggerFactory.getLogger(BusStop.class);
