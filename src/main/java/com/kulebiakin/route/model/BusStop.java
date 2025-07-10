@@ -53,4 +53,13 @@ public class BusStop {
             lock.unlock();
         }
     }
+
+    public int getBusCount() {
+        lock.lock();
+        try {
+            return currentBuses.size();
+        } finally {
+            lock.unlock();
+        }
+    }
 }
