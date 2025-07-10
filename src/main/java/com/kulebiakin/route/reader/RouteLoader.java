@@ -11,39 +11,35 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class RouteLoader {
     private static final Logger log = LoggerFactory.getLogger(RouteLoader.class);
+    private static final String COLUMN_SEPARATOR = ";";
+    private static final String STOP_NAME_SEPARATOR = ",";
 
     public List<Bus> loadBuses(Path filePath) {
         List<Bus> buses = new ArrayList<>();
 
-        try {
-            List<String> lines = Files.readAllLines(filePath);
+        try (Stream<String> lines = Files.lines(filePath)) {
+            lines.filter(line -> !line.isBlank() && !line.startsWith("#"))
+                .forEach(line -> {
+                    try {
+                        String[] parts = line.split(COLUMN_SEPARATOR);
+                        String busName = parts[0].trim();
+                        int waitTime = Integer.parseInt(parts[1].trim());
 
-            for (String line : lines) {
-                if (line.isBlank() || line.startsWith("#")) {
-                    continue;
-                }
+                        List<BusStop> route = new ArrayList<>();
+                        for (String stopName : parts[2].split(STOP_NAME_SEPARATOR)) {
+                            route.add(BusStopManager.getInstance().getOrCreateStop(stopName.trim()));
+                        }
 
-                String[] parts = line.split(";");
-                String busName = parts[0].trim();
-                int waitTime = Integer.parseInt(parts[1].trim());
-
-                String[] stopNames = parts[2].split(",");
-                List<BusStop> route = new ArrayList<>();
-
-                for (String stopName : stopNames) {
-                    stopName = stopName.trim();
-                    BusStop stop = BusStopManager.getInstance().getOrCreateStop(stopName);
-                    route.add(stop);
-                }
-
-                Bus bus = new Bus(busName, route, waitTime);
-                buses.add(bus);
-
-                log.info("Created bus {} with route {}", busName, stopNames);
-            }
+                        buses.add(new Bus(busName, route, waitTime));
+                        log.info("Created bus {} with route {}", busName, parts[2]);
+                    } catch (Exception e) {
+                        log.warn("Error reading line '{}', skipping", line, e);
+                    }
+                });
 
         } catch (IOException e) {
             log.error("Failed to load routes from file: {}", e.getMessage());
