@@ -21,6 +21,7 @@ public class BusStop {
 
     public BusStop(String busStopName, int maxBuses) {
         this.busStopName = busStopName;
+
         this.maxBuses = maxBuses;
     }
 

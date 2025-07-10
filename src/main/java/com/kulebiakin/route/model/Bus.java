@@ -9,11 +9,13 @@ import java.util.concurrent.TimeUnit;
 public class Bus extends Thread {
     private static final Logger log = LoggerFactory.getLogger(Bus.class);
 
+    private final String busName;
     private final List<BusStop> route;
     private final int waitSecondsPerStop;
 
     public Bus(String name, List<BusStop> route, int waitSecondsPerStop) {
         super(name);
+        this.busName = name;
         this.route = route;
         this.waitSecondsPerStop = waitSecondsPerStop;
     }
@@ -35,5 +37,17 @@ public class Bus extends Thread {
             }
         }
         log.info("{} has completed the route", getName());
+    }
+
+    public List<BusStop> getRoute() {
+        return route;
+    }
+
+    public String getBusName() {
+        return busName;
+    }
+
+    public int getWaitSecondsPerStop() {
+        return waitSecondsPerStop;
     }
 }
