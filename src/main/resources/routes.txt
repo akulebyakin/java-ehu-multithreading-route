@@ -1,0 +1,4 @@
+# Format: BusName;WaitTime;Stop1,Stop2,Stop3,...
+BusA;2;Stop1,Stop2,Stop3
+BusB;3;Stop2,Stop4
+BusC;1;Stop1,Stop3,Stop4
