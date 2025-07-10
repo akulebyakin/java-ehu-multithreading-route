@@ -2,24 +2,25 @@ package com.kulebiakin.route.reader;
 
 import com.kulebiakin.route.model.Bus;
 import com.kulebiakin.route.model.BusStop;
+import com.kulebiakin.route.service.BusStopManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class RouteInitializer {
-    private static final Logger log = LoggerFactory.getLogger(RouteInitializer.class);
-
-    private final Map<String, BusStop> stopRegistry = new HashMap<>();
+public class RouteLoader {
+    private static final Logger log = LoggerFactory.getLogger(RouteLoader.class);
 
     public List<Bus> loadBuses(Path filePath) {
         List<Bus> buses = new ArrayList<>();
 
         try {
             List<String> lines = Files.readAllLines(filePath);
+
             for (String line : lines) {
                 if (line.isBlank() || line.startsWith("#")) {
                     continue;
@@ -34,7 +35,7 @@ public class RouteInitializer {
 
                 for (String stopName : stopNames) {
                     stopName = stopName.trim();
-                    BusStop stop = stopRegistry.computeIfAbsent(stopName, name -> new BusStop(name, 2));
+                    BusStop stop = BusStopManager.getInstance().getOrCreateStop(stopName);
                     route.add(stop);
                 }
 
@@ -43,14 +44,11 @@ public class RouteInitializer {
 
                 log.info("Created bus {} with route {}", busName, stopNames);
             }
+
         } catch (IOException e) {
-            log.error("Error reading routes: {}", e.getMessage());
+            log.error("Failed to load routes from file: {}", e.getMessage());
         }
 
         return buses;
-    }
-
-    public Collection<BusStop> getAllStops() {
-        return stopRegistry.values();
     }
 }

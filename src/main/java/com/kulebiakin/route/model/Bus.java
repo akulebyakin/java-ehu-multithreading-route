@@ -34,6 +34,6 @@ public class Bus extends Thread {
                 break;
             }
         }
-        log.info("{} has completed the route.", getName());
+        log.info("{} has completed the route", getName());
     }
 }

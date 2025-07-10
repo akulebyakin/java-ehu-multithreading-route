@@ -1,13 +1,8 @@
 package com.kulebiakin.route;
 
 import com.kulebiakin.route.model.Bus;
-import com.kulebiakin.route.model.BusStop;
-import com.kulebiakin.route.model.Passenger;
-import com.kulebiakin.route.reader.RouteInitializer;
-import com.kulebiakin.route.service.BusStopManager;
-import com.kulebiakin.route.state.StopState;
-import com.kulebiakin.route.state.impl.BusyState;
-import com.kulebiakin.route.state.impl.IdleState;
+import com.kulebiakin.route.reader.RouteLoader;
+import com.kulebiakin.route.service.PassengerSimulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +10,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public class RouteApplication {
 
@@ -23,19 +17,24 @@ public class RouteApplication {
     private static final Logger log = LoggerFactory.getLogger(RouteApplication.class);
 
     public static void main(String[] args) {
-        RouteInitializer initializer = new RouteInitializer();
+        RouteLoader initializer = new RouteLoader();
         List<Bus> buses = initializer.loadBuses(getRouteFilePath(ROUTE_FILE));
         log.info("Total buses loaded: {}", buses.size());
 
-        // Start bus threads
+        if (buses.isEmpty()) {
+            log.error("No buses found in the route file. Exiting.");
+            return;
+        }
+
+        // Start passenger simulation thread
+        new PassengerSimulator().start();
+
+        // Start all bus threads
         for (Bus bus : buses) {
             bus.start();
         }
 
-        // Simulate passengers at stops
-        simulatePassengers();
-
-        // Wait for bus threads to finish
+        // Wait for all bus threads to complete
         for (Bus bus : buses) {
             try {
                 bus.join();
@@ -45,7 +44,7 @@ public class RouteApplication {
             }
         }
 
-        log.info("Bus route simulation completed.");
+        log.info("Bus route simulation completed");
     }
 
     private static Path getRouteFilePath(String routeFile) {
@@ -55,39 +54,8 @@ public class RouteApplication {
                 "Route file not found: " + routeFile
             ).toURI());
         } catch (URISyntaxException e) {
-            log.error("Route file not found: " + routeFile, e);
+            log.error("Failed to resolve route file: {}", routeFile, e);
             throw new RuntimeException(e);
         }
-    }
-
-    private static void simulatePassengers() {
-        new Thread(() -> {
-            BusStopManager manager = BusStopManager.getInstance();
-            String[] passengerNames = {"Andrey", "Svetlana", "Marat", "Yulia", "Olga"};
-
-            for (int i = 0; i < 5; i++) {
-                for (BusStop stop : manager.getAllStops()) {
-                    Passenger p = new Passenger(passengerNames[i % passengerNames.length] + "-" + i);
-                    p.actAtStop(stop);
-
-                    // You can call the stop state
-                    StopState state = stopStateByBusCount(stop);
-                    state.handle(stop);
-                }
-
-                try {
-                    TimeUnit.SECONDS.sleep(4);
-                } catch (InterruptedException e) {
-                    log.warn("Passenger thread interrupted: {}", e.getMessage());
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }, "PassengerSimulation").start();
-    }
-
-    private static StopState stopStateByBusCount(BusStop stop) {
-        // Simple logic — if occupancy > 0, consider BUSY
-        return stop.getBusCount() > 0 ? new BusyState() : new IdleState();
     }
 }
